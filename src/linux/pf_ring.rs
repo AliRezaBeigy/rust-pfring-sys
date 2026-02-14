@@ -1,7 +1,15 @@
 use crate::{ __BindgenBitfieldUnit, __IncompleteArrayField, };
 use crate::libc::{ c_uint, uint8_t, uint16_t, uint32_t, uint64_t, c_uchar, time_t, };
 
-use crate::libc::{ self, timeval, in6_addr,  };
+use crate::libc::{self, timeval};
+
+// Local in6_addr with no alignment requirement so it can live in #[repr(packed)] structs.
+// Layout matches C struct in6_addr (16 bytes). Using libc::in6_addr causes E0588 in packed structs.
+#[repr(C)]
+#[derive(Copy, Clone, Debug, Default)]
+pub struct in6_addr {
+    pub s6_addr: [u8; 16],
+}
 
 
 pub const RING_MAGIC_VALUE: u32 = 136;
@@ -88,7 +96,7 @@ pub const NETDEV_PRE_UP: u32 = 13;
 
 
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct pkt_offset {
     pub eth_offset: i16,
     pub vlan_offset: i16,
@@ -104,7 +112,7 @@ pub union ip_addr {
     _bindgen_union_align: [u32; 4usize],
 }
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct eth_vlan_hdr {
     pub h_vlan_id: uint16_t,
     pub h_proto: uint16_t,
@@ -122,36 +130,39 @@ pub struct kcompact_ipv6_hdr {
 impl kcompact_ipv6_hdr {
     #[inline]
     pub fn flow_lbl(&self) -> uint32_t {
-        unsafe { ::std::mem::transmute(self._bitfield_1.get(0usize, 24u8) as u32) }
+        let bf = unsafe { std::ptr::addr_of!(self._bitfield_1).read_unaligned() };
+        unsafe { ::std::mem::transmute(bf.get(0usize, 24u8) as u32) }
     }
     #[inline]
     pub fn set_flow_lbl(&mut self, val: uint32_t) {
-        unsafe {
-            let val: u32 = ::std::mem::transmute(val);
-            self._bitfield_1.set(0usize, 24u8, val as u64)
-        }
+        let val: u32 = unsafe { ::std::mem::transmute(val) };
+        let mut bf = unsafe { std::ptr::addr_of!(self._bitfield_1).read_unaligned() };
+        bf.set(0usize, 24u8, val as u64);
+        unsafe { std::ptr::addr_of_mut!(self._bitfield_1).write_unaligned(bf) }
     }
     #[inline]
     pub fn priority(&self) -> uint32_t {
-        unsafe { ::std::mem::transmute(self._bitfield_1.get(24usize, 4u8) as u32) }
+        let bf = unsafe { std::ptr::addr_of!(self._bitfield_1).read_unaligned() };
+        unsafe { ::std::mem::transmute(bf.get(24usize, 4u8) as u32) }
     }
     #[inline]
     pub fn set_priority(&mut self, val: uint32_t) {
-        unsafe {
-            let val: u32 = ::std::mem::transmute(val);
-            self._bitfield_1.set(24usize, 4u8, val as u64)
-        }
+        let val: u32 = unsafe { ::std::mem::transmute(val) };
+        let mut bf = unsafe { std::ptr::addr_of!(self._bitfield_1).read_unaligned() };
+        bf.set(24usize, 4u8, val as u64);
+        unsafe { std::ptr::addr_of_mut!(self._bitfield_1).write_unaligned(bf) }
     }
     #[inline]
     pub fn version(&self) -> uint32_t {
-        unsafe { ::std::mem::transmute(self._bitfield_1.get(28usize, 4u8) as u32) }
+        let bf = unsafe { std::ptr::addr_of!(self._bitfield_1).read_unaligned() };
+        unsafe { ::std::mem::transmute(bf.get(28usize, 4u8) as u32) }
     }
     #[inline]
     pub fn set_version(&mut self, val: uint32_t) {
-        unsafe {
-            let val: u32 = ::std::mem::transmute(val);
-            self._bitfield_1.set(28usize, 4u8, val as u64)
-        }
+        let val: u32 = unsafe { ::std::mem::transmute(val) };
+        let mut bf = unsafe { std::ptr::addr_of!(self._bitfield_1).read_unaligned() };
+        bf.set(28usize, 4u8, val as u64);
+        unsafe { std::ptr::addr_of_mut!(self._bitfield_1).write_unaligned(bf) }
     }
     #[inline]
     pub fn new_bitfield_1(
@@ -177,20 +188,20 @@ impl kcompact_ipv6_hdr {
     }
 }
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct kcompact_ipv6_opt_hdr {
     pub nexthdr: uint8_t,
     pub hdrlen: uint8_t,
     pub padding: [uint8_t; 6usize],
 }
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct gre_header {
     pub flags_and_version: uint16_t,
     pub proto: uint16_t,
 }
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct gtp_v1_hdr {
     pub flags: uint8_t,
     pub message_type: uint8_t,
@@ -198,19 +209,20 @@ pub struct gtp_v1_hdr {
     pub teid: uint32_t,
 }
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct gtp_v1_opt_hdr {
     pub seq_num: uint16_t,
     pub npdu_num: uint8_t,
     pub next_ext_hdr: uint8_t,
 }
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct gtp_v1_ext_hdr {
     pub len: uint8_t,
 }
 #[repr(C, packed)]
 #[derive(Copy, Clone)]
+#[allow(dead_code)]
 pub struct tunnel_info {
     pub tunnel_id: uint32_t,
     pub tunneled_ip_version: uint8_t,
@@ -220,24 +232,8 @@ pub struct tunnel_info {
     pub tunneled_l4_src_port: uint16_t,
     pub tunneled_l4_dst_port: uint16_t,
 }
-impl core::fmt::Debug for tunnel_info {
-    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        let src = if self.tunneled_ip_version == 4 { unsafe { format!("{:?}", self.tunneled_ip_src.v4) } } else { unsafe { format!("{:?}", self.tunneled_ip_src.v6.s6_addr) } };
-        let dst = if self.tunneled_ip_version == 4 { unsafe { format!("{:?}", self.tunneled_ip_dst.v4) } } else { unsafe { format!("{:?}", self.tunneled_ip_dst.v6.s6_addr) } };
-        write!(f, "tunnel_info: {{ tunnel_id: {:?}, tunneled_ip_version: {:?}, tunneled_proto: {:?}",
-            self.tunnel_id,
-            self.tunneled_ip_version,
-            self.tunneled_proto,)?;
-        write!(f, ", tunneled_ip_src: {}, tunneled_ip_dst: {}, tunneled_l4_src_port: {:?}, tunneled_l4_dst_port: {:?}",
-            src,
-            dst,
-            self.tunneled_l4_src_port,
-            self.tunneled_l4_dst_port)
-    }
-}
-
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct mobile_ip_hdr {
     pub message_type: uint8_t,
     pub next_header: uint8_t,
@@ -248,6 +244,7 @@ pub const short_pkt_header: pkt_header_len = 1;
 pub type pkt_header_len = u32;
 #[repr(C, packed)]
 #[derive(Copy, Clone)]
+#[allow(dead_code)]
 pub struct pkt_parsing_info {
     pub dmac: [uint8_t; 6usize],
     pub smac: [uint8_t; 6usize],
@@ -269,25 +266,6 @@ pub struct pkt_parsing_info {
     pub offset: pkt_offset,
 }
 
-impl core::fmt::Debug for pkt_parsing_info {
-    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        let src = if self.ip_version == 4 { unsafe { format!("{:?}", self.ip_src.v4) } } else { unsafe { format!("{:?}", self.ip_src.v6.s6_addr) } };
-        let dst = if self.ip_version == 4 { unsafe { format!("{:?}", self.ip_dst.v4) } } else { unsafe { format!("{:?}", self.ip_dst.v6.s6_addr) } };
-
-        write!(f, "pkt_parsing_info {{ dmac: {:?}, smac: {:?}", self.dmac, self.smac)?;
-        write!(f, ", eth_type: {:?}, vlan_id: {:?}", self.eth_type, self.vlan_id)?;
-        write!(f, ", qinq_vlan_id: {:?}, ip_version: {:?} l3_proto: {:?}", self.qinq_vlan_id, self.ip_version, self.l3_proto)?;
-        write!(f, ", ip_tos: {:?}, ip_src: {}, ip_dst: {}", self.ip_tos, src, dst)?;
-        write!(f, ", l4_src_port: {:?}, l4_dst_port: {:?}, icmp_type: {:?}, icmp_code: {:?}",
-                    self.l4_src_port,
-                    self.l4_dst_port,
-                    self.icmp_type,
-                    self.icmp_code)?;
-        write!(f, ", tcp: {{ flags: {:?}, seq_num: {:?}, ack_num: {:?} }}", self.tcp.flags, self.tcp.seq_num, self.tcp.ack_num)?;
-        write!(f, ", tunnel: {:?}, last_matched_rule_id: {:?}, offset: {:?}", self.tunnel, self.last_matched_rule_id, self.offset)
-    }
-}
-
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct pkt_parsing_info__bindgen_ty_1 {
@@ -296,7 +274,7 @@ pub struct pkt_parsing_info__bindgen_ty_1 {
     pub ack_num: uint32_t,
 }
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct pfring_extended_pkthdr {
     pub timestamp_ns: uint64_t,
     pub flags: uint32_t,
@@ -314,21 +292,12 @@ pub struct pfring_extended_pkthdr__bindgen_ty_1 {
 }
 #[repr(C, packed)]
 #[derive(Copy, Clone)]
+#[allow(dead_code)]
 pub struct pfring_pkthdr {
     pub ts: timeval,
     pub caplen: uint32_t,
     pub len: uint32_t,
     pub extended_hdr: pfring_extended_pkthdr,
-}
-impl core::fmt::Debug for pfring_pkthdr {
-    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "pfring_pkthdr {{ ts: timeval {{ tv_sec: {:?}, tv_usec: {:?} }}",
-            self.ts.tv_sec,
-            self.ts.tv_usec)?;
-        write!(f, ", caplen: {:?}, len: {:?}, extended_hdr: {:?}",
-            self.caplen,
-            self.len, self.extended_hdr)
-    }
 }
 #[repr(C, packed)]
 #[derive(Copy, Clone)]
@@ -392,7 +361,7 @@ pub const send_only_mode: socket_mode = 1;
 pub const recv_only_mode: socket_mode = 2;
 pub type socket_mode = u32;
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct filtering_internals {
     pub jiffies_last_match: libc::c_ulong,
     pub reflector_dev: *mut net_device,
@@ -412,7 +381,7 @@ pub struct filtering_rule {
     pub internals: filtering_internals,
 }
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct intel_82599_five_tuple_filter_hw_rule {
     pub proto: uint8_t,
     pub s_addr: uint32_t,
@@ -422,7 +391,7 @@ pub struct intel_82599_five_tuple_filter_hw_rule {
     pub queue_id: uint16_t,
 }
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct intel_82599_perfect_filter_hw_rule {
     pub vlan_id: uint16_t,
     pub proto: uint8_t,
@@ -480,7 +449,7 @@ pub const flow_drop_rule: generic_flow_rule_action_type = 0;
 pub const flow_mark_rule: generic_flow_rule_action_type = 1;
 pub type generic_flow_rule_action_type = u32;
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct generic_flow_id_hw_rule {
     pub action: generic_flow_rule_action_type,
     pub flow_id: uint32_t,
@@ -528,7 +497,7 @@ pub const add_hw_rule: hw_filtering_rule_command = 0;
 pub const remove_hw_rule: hw_filtering_rule_command = 1;
 pub type hw_filtering_rule_command = u32;
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct pfring_timespec {
     pub tv_sec: uint32_t,
     pub tv_nsec: uint32_t,
@@ -555,7 +524,7 @@ pub struct generic_flow_update {
     pub rev_ts_last: pfring_timespec,
 }
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct generic_flow_feedback {
     pub action: generic_flow_rule_action_type,
     pub flow_id: uint32_t,
@@ -585,7 +554,7 @@ pub type perfect_filter_hw_rule_handler = ::std::option::Option<
     ) -> libc::c_int,
 >;
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct hw_filtering_device_handler {
     pub five_tuple_handler: five_tuple_rule_handler,
     pub perfect_filter_handler: perfect_filter_hw_rule_handler,
@@ -606,7 +575,7 @@ pub struct hash_filtering_rule {
     pub internals: filtering_internals,
 }
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct hash_filtering_rule_stats {
     pub match_: uint64_t,
     pub filtered: uint64_t,
@@ -678,7 +647,7 @@ pub const intel_fm10k: zc_dev_model = 9;
 pub const intel_ixgbe_vf: zc_dev_model = 10;
 pub type zc_dev_model = u32;
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct mem_ring_info {
     pub packet_memory_num_slots: uint32_t,
     pub packet_memory_slot_len: uint32_t,
@@ -689,7 +658,7 @@ pub struct mem_ring_info {
     pub num_queues: uint32_t,
 }
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct zc_memory_info {
     pub rx: mem_ring_info,
     pub tx: mem_ring_info,
@@ -697,7 +666,7 @@ pub struct zc_memory_info {
     pub device_model: zc_dev_model,
 }
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct zc_dev_info {
     pub mem_info: zc_memory_info,
     pub channel_id: uint16_t,
@@ -716,7 +685,7 @@ pub struct zc_dev_info {
     pub usage_notification: zc_dev_notify,
 }
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct zc_dev_mapping {
     pub operation: zc_dev_operation,
     pub device_name: [libc::c_char; 16usize],
@@ -737,7 +706,7 @@ pub const cluster_per_flow_ip_5_tuple: cluster_type = 11;
 pub const cluster_per_inner_flow_ip_5_tuple: cluster_type = 12;
 pub type cluster_type = u32;
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct add_to_cluster {
     pub clusterId: c_uint,
     pub the_type: cluster_type,
@@ -746,27 +715,27 @@ pub const standard_nic_family: pfring_device_type = 0;
 pub const intel_82599_family: pfring_device_type = 1;
 pub type pfring_device_type = u32;
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct virtual_filtering_device_info {
     pub device_name: [libc::c_char; 16usize],
     pub device_type: pfring_device_type,
     pub proc_entry: *mut proc_dir_entry,
 }
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct create_cluster_referee_info {
     pub cluster_id: uint32_t,
     pub recovered: uint32_t,
 }
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct public_cluster_object_info {
     pub cluster_id: uint32_t,
     pub object_type: uint32_t,
     pub object_id: uint32_t,
 }
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct lock_cluster_object_info {
     pub cluster_id: uint32_t,
     pub object_type: uint32_t,
